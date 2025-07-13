@@ -21,11 +21,11 @@ if grep ip6-localhost /etc/hosts; then
     cat /etc/hosts
 fi
 
-# Use a rudimental retry workflow as workaround to svn export hanging
+# Use a rudimental retry workflow as workaround to git clone hanging
 # for minutes or failing randomly.  Travis automatically kills a build
 # if one step takes more than 10 minutes without reporting any
 # progress.
-function run_svn_export() {
+function run_git_clone() {
    local url=$1
    local revision=$2
    local dest_dir=$3
@@ -36,7 +36,7 @@ function run_svn_export() {
 
    for i in $(seq 1 $max_tries)
    do
-       timeout 60 svn export -r ${revision} --force -q $url $dest_dir
+       timeout 60 git clone --depth 1 --branch ${revision} $url $dest_dir
        if [ $? -eq 0 ]; then
            break
        else
@@ -143,7 +143,7 @@ if ! test -v SKIP_TESTING -o -v NO_TEST_FRAMEWORK; then
     # use a checkout of trunk until there is an updated CPAN release
     # with that revision.
     if test -v TEST_OPENSSL3; then
-       run_svn_export https://svn.apache.org/repos/asf/perl/Apache-Test/trunk HEAD test/perl-framework/Apache-Test 5
+       run_git_clone https://github.com/apache/httpd-tests.git trunk test/perl-framework/Apache-Test 5
     fi
 fi
 
@@ -172,7 +172,7 @@ if test -v TEST_OPENSSL3; then
 
         mkdir -p build/openssl
         pushd build/openssl
-           curl -L "https://github.com/openssl/openssl/releases/download/openssl-${TEST_OPENSSL3}/openssl-${TEST_OPENSSL3}.tar.gz" |
+           wget -qO- "https://github.com/openssl/openssl/releases/download/openssl-${TEST_OPENSSL3}/openssl-${TEST_OPENSSL3}.tar.gz" |
               tar -xzf -
            cd openssl-${TEST_OPENSSL3}
            # Build with RPATH so ./bin/openssl doesn't require $LD_LIBRARY_PATH
