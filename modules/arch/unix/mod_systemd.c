@@ -139,8 +139,16 @@ static int ap_find_systemd_socket(process_rec * process, apr_port_t port) {
         return -1;
     }
 
-    fdcount = atoi(getenv("LISTEN_FDS"));
-    for (fd = SD_LISTEN_FDS_START; fd < SD_LISTEN_FDS_START + fdcount; fd++) {
+const char *listen_fds_env = getenv("LISTEN_FDS");
+if (!listen_fds_env) {
+    ap_log_perror(APLOG_MARK, APLOG_CRIT, 0, process->pool, APLOGNO(02488)
+                  "find_systemd_socket: LISTEN_FDS environment variable is missing");
+    return -1;
+}
+
+fdcount = atoi(listen_fds_env);
+
+  for (fd = SD_LISTEN_FDS_START; fd < SD_LISTEN_FDS_START + fdcount; fd++) {
         if (sd_is_socket_inet(fd, 0, 0, -1, port) > 0) {
             return fd;
         }
