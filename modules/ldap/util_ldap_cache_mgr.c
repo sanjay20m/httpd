@@ -92,6 +92,7 @@ void util_ald_free(util_ald_cache_t *cache, const void *ptr)
 #else
     if (ptr)
         free((void *)ptr);
+        ptr = NULL;
 #endif
 }
 
